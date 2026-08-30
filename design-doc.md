@@ -156,3 +156,15 @@ Since this is a personal project, authentication is deferred during initial MVP 
 An authentication layer will be added on top later:
 * **Framework**: Built using **`appleboy/gin-jwt`** (JWT middleware for Gin) alongside `golang.org/x/crypto/bcrypt` for secure password hashing.
 * **Modular Integration**: Auth will be introduced as a middleware guard in Gin (`internal/shared/middleware/auth.go`) or a dedicated `auth` module, guarding protected API route groups without polluting core domain logic.
+
+---
+
+## 6. Containerization & Deployment Strategy
+
+The application will be fully dockerized for seamless local orchestration and production deployability:
+
+* **Go Backend (`backend/Dockerfile`)**: Multi-stage build compiling the Go binary with static linking and running inside a lightweight `alpine` runtime container.
+* **Next.js Frontend (`frontend/Dockerfile`)**: Multi-stage build utilizing Next.js standalone output for minimal image size and fast startup.
+* **Docker Compose (`docker-compose.yml`)**:
+  * Orchestrates the Go API backend, Next.js frontend, and environment configuration.
+  * Configurable to run with local SQLite volume mounts or spin up a PostgreSQL service container when transitioning from SQLite to Postgres.

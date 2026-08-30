@@ -74,3 +74,12 @@ cd frontend && npx playwright test
 # Run Playwright UI mode
 cd frontend && npx playwright test --ui
 ```
+
+### Docker
+```bash
+# Build and spin up all containers
+docker-compose up --build
+
+# Run in background
+docker-compose up -d
+```
