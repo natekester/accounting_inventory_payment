@@ -119,6 +119,24 @@ export default function Dashboard() {
     }
   };
 
+  const handleQBOSync = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/inventory/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      showMsg(`QBO Synchronization complete! Synced ${data.items_synced} item(s).`);
+      fetchAll();
+    } catch (err: any) {
+      showMsg(err.message || 'QBO Sync failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Payment Handler
   const handleProcessPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,7 +307,17 @@ export default function Dashboard() {
 
           {/* List View */}
           <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#f3f4f6' }}>Inventory Items Table (`inventory_items`)</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 1rem 0' }}>
+              <h3 style={{ margin: 0, color: '#f3f4f6' }}>Inventory Items Table (`inventory_items`)</h3>
+              <button 
+                onClick={handleQBOSync}
+                className="btn-secondary" 
+                style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s' }}
+                disabled={loading}
+              >
+                {loading ? 'Syncing...' : 'Sync with QBO'}
+              </button>
+            </div>
             {items.length === 0 ? (
               <p style={{ color: '#6b7280' }}>No inventory items found. Add one above!</p>
             ) : (

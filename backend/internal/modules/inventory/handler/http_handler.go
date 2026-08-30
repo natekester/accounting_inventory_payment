@@ -22,6 +22,7 @@ func (h *HTTPHandler) RegisterRoutes(router *gin.RouterGroup) {
 		group.GET("/items", h.ListItems)
 		group.GET("/items/:id", h.GetItem)
 		group.POST("/items/:id/adjust", h.AdjustStock)
+		group.POST("/sync", h.SyncCurrentItems)
 	}
 }
 
@@ -108,4 +109,17 @@ func (h *HTTPHandler) AdjustStock(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, item)
+}
+
+func (h *HTTPHandler) SyncCurrentItems(c *gin.Context) {
+	count, err := h.service.SyncCurrentItems(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":      "Synchronization complete",
+		"items_synced": count,
+	})
 }

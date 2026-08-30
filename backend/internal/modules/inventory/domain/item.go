@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -100,4 +101,32 @@ func (s *Service) AdjustStock(ctx context.Context, id string, delta int) (*Item,
 	}
 
 	return item, nil
+}
+
+func (s *Service) SyncCurrentItems(ctx context.Context) (int, error) {
+	items, err := s.repo.List(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	syncedCount := 0
+	for _, item := range items {
+		if item.QBOItemID == "" && s.qbo != nil {
+			qboID, err := s.qbo.CreateItem(ctx, *item)
+			if err != nil {
+				log.Printf("[QBO Sync] Failed to bulk-sync item %s (%s): %v", item.ID, item.SKU, err)
+				continue
+			}
+
+			if err := s.repo.UpdateQBOItemID(ctx, item.ID, qboID); err != nil {
+				log.Printf("[QBO Sync] Failed to update local QBO ref for item %s: %v", item.ID, err)
+				continue
+			}
+
+			item.QBOItemID = qboID
+			syncedCount++
+		}
+	}
+
+	return syncedCount, nil
 }
