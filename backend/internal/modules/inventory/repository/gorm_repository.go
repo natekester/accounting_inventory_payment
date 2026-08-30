@@ -29,6 +29,7 @@ func (r *gormRepository) Create(ctx context.Context, item *domain.Item) error {
 		Description: item.Description,
 		Quantity:    item.Quantity,
 		PriceCents:  item.PriceCents,
+		QBOItemID:   item.QBOItemID,
 	}
 	if err := r.db.WithContext(ctx).Create(&model).Error; err != nil {
 		return err
@@ -36,6 +37,10 @@ func (r *gormRepository) Create(ctx context.Context, item *domain.Item) error {
 	item.CreatedAt = model.CreatedAt
 	item.UpdatedAt = model.UpdatedAt
 	return nil
+}
+
+func (r *gormRepository) UpdateQBOItemID(ctx context.Context, id string, qboItemID string) error {
+	return r.db.WithContext(ctx).Model(&db.ItemModel{}).Where("id = ?", id).Update("qbo_item_id", qboItemID).Error
 }
 
 func (r *gormRepository) GetByID(ctx context.Context, id string) (*domain.Item, error) {
@@ -95,6 +100,7 @@ func toDomain(m *db.ItemModel) *domain.Item {
 		Description: m.Description,
 		Quantity:    m.Quantity,
 		PriceCents:  m.PriceCents,
+		QBOItemID:   m.QBOItemID,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}

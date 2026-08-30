@@ -11,6 +11,7 @@ interface InventoryItem {
   description: string;
   quantity: number;
   price_cents: number;
+  qbo_item_id?: string;
   created_at: string;
 }
 
@@ -306,7 +307,12 @@ export default function Dashboard() {
                   <tbody>
                     {items.map(item => (
                       <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'monospace', color: '#818cf8' }}>{item.sku}</td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}>
+                          <div style={{ fontFamily: 'monospace', color: '#818cf8' }}>{item.sku}</div>
+                          {item.qbo_item_id && (
+                            <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '0.25rem' }}>QBO Ref: {item.qbo_item_id}</div>
+                          )}
+                        </td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           <div style={{ fontWeight: 600 }}>{item.name}</div>
                           <div style={{ fontSize: '0.8rem', color: '#9ca3af' }}>{item.description}</div>

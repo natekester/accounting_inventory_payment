@@ -15,6 +15,7 @@ type ItemModel struct {
 	Description string    `gorm:"type:text" json:"description"`
 	Quantity    int       `gorm:"not null;default:0" json:"quantity"`
 	PriceCents  int64     `gorm:"not null" json:"price_cents"`
+	QBOItemID   string    `gorm:"type:varchar(64)" json:"qbo_item_id"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

@@ -51,9 +51,38 @@ func (m *mockRepository) UpdateQuantity(ctx context.Context, id string, delta in
 	return item, nil
 }
 
+func (m *mockRepository) UpdateQBOItemID(ctx context.Context, id string, qboItemID string) error {
+	if item, ok := m.items[id]; ok {
+		item.QBOItemID = qboItemID
+	}
+	return nil
+}
+
+type mockQBO struct {
+	createCalled     bool
+	adjustCalled     bool
+	lastCreatedItem  domain.Item
+	lastAdjustQBOID  string
+	lastAdjustDelta  int
+}
+
+func (m *mockQBO) CreateItem(ctx context.Context, item domain.Item) (string, error) {
+	m.createCalled = true
+	m.lastCreatedItem = item
+	return "mock-qbo-ref-999", nil
+}
+
+func (m *mockQBO) AdjustInventory(ctx context.Context, qboItemID string, qtyDelta int) error {
+	m.adjustCalled = true
+	m.lastAdjustQBOID = qboItemID
+	m.lastAdjustDelta = qtyDelta
+	return nil
+}
+
 func TestInventoryService_CreateAndGet(t *testing.T) {
 	repo := newMockRepository()
-	service := domain.NewService(repo)
+	qbo := &mockQBO{}
+	service := domain.NewService(repo, qbo)
 	ctx := context.Background()
 
 	item := &domain.Item{
@@ -68,6 +97,14 @@ func TestInventoryService_CreateAndGet(t *testing.T) {
 		t.Fatalf("expected no error creating item, got %v", err)
 	}
 
+	if !qbo.createCalled {
+		t.Errorf("expected QBO CreateItem to be called, but it was not")
+	}
+
+	if item.QBOItemID != "mock-qbo-ref-999" {
+		t.Errorf("expected QBOItemID to be populated as 'mock-qbo-ref-999', got '%s'", item.QBOItemID)
+	}
+
 	fetched, err := service.GetItem(ctx, item.ID)
 	if err != nil {
 		t.Fatalf("expected no error fetching item, got %v", err)
@@ -80,7 +117,8 @@ func TestInventoryService_CreateAndGet(t *testing.T) {
 
 func TestInventoryService_AdjustStock_InsufficientStock(t *testing.T) {
 	repo := newMockRepository()
-	service := domain.NewService(repo)
+	qbo := &mockQBO{}
+	service := domain.NewService(repo, qbo)
 	ctx := context.Background()
 
 	item := &domain.Item{
@@ -93,5 +131,40 @@ func TestInventoryService_AdjustStock_InsufficientStock(t *testing.T) {
 	_, err := service.AdjustStock(ctx, "item-stock-1", -10)
 	if err != domain.ErrInsufficientStock {
 		t.Fatalf("expected ErrInsufficientStock, got %v", err)
+	}
+}
+
+func TestInventoryService_AdjustStock_Success(t *testing.T) {
+	repo := newMockRepository()
+	qbo := &mockQBO{}
+	service := domain.NewService(repo, qbo)
+	ctx := context.Background()
+
+	item := &domain.Item{
+		ID:        "item-stock-2",
+		SKU:       "SKU-003",
+		Quantity:  5,
+		QBOItemID: "mock-qbo-ref-999",
+	}
+	_ = service.CreateItem(ctx, item)
+
+	// Reset mock call flags
+	qbo.adjustCalled = false
+
+	updated, err := service.AdjustStock(ctx, "item-stock-2", 3)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if updated.Quantity != 8 {
+		t.Errorf("expected quantity to be 8, got %d", updated.Quantity)
+	}
+
+	if !qbo.adjustCalled {
+		t.Errorf("expected QBO AdjustInventory to be called, but it was not")
+	}
+
+	if qbo.lastAdjustQBOID != "mock-qbo-ref-999" || qbo.lastAdjustDelta != 3 {
+		t.Errorf("expected QBO Adjust parameters to be ID='mock-qbo-ref-999', delta=3, got ID='%s', delta=%d", qbo.lastAdjustQBOID, qbo.lastAdjustDelta)
 	}
 }
