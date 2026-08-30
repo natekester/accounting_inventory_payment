@@ -13,12 +13,16 @@ import (
 type QBOStrategy struct {
 	clientID     string
 	clientSecret string
+	accessToken  string
+	realmID      string
 }
 
-func NewQBOStrategy(clientID, clientSecret string) domain.QBOIntegration {
+func NewQBOStrategy(clientID, clientSecret, accessToken, realmID string) domain.QBOIntegration {
 	return &QBOStrategy{
 		clientID:     clientID,
 		clientSecret: clientSecret,
+		accessToken:  accessToken,
+		realmID:      realmID,
 	}
 }
 

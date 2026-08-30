@@ -65,8 +65,10 @@ func main() {
 	// Inventory Module with QBO Integration Strategy
 	qboClientID := os.Getenv("QBO_CLIENT_ID")
 	qboClientSecret := os.Getenv("QBO_CLIENT_SECRET")
+	qboAccessToken := os.Getenv("QBO_ACCESS_TOKEN")
+	qboRealmID := os.Getenv("QBO_REALM_ID")
 	
-	qboStrategy := strategy.NewQBOStrategy(qboClientID, qboClientSecret)
+	qboStrategy := strategy.NewQBOStrategy(qboClientID, qboClientSecret, qboAccessToken, qboRealmID)
 	iRepo := invRepo.NewGORMRepository(db)
 	iService := invDomain.NewService(iRepo, qboStrategy)
 	iHandler := invHandler.NewHTTPHandler(iService)

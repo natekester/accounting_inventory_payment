@@ -14,7 +14,9 @@ services:
       - DB_DRIVER=sqlite
       - DB_DSN=inventory.db
       - QBO_CLIENT_ID=${QBO_CLIENT_ID}
-      - QBO_CLIENT_SECRET=${QBO_CLIENT_SECRET}
+      - QBO_CLIENT_SECRET=${QBO_SECRET}
+      - QBO_ACCESS_TOKEN=${QBO_ACCESS_TOKEN}
+      - QBO_REALM_ID=${QBO_REALM_ID}
     volumes:
       - ./backend:/app
     restart: unless-stopped
