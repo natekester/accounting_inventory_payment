@@ -168,3 +168,13 @@ The application will be fully dockerized for seamless local orchestration and pr
 * **Docker Compose (`docker-compose.yml`)**:
   * Orchestrates the Go API backend, Next.js frontend, and environment configuration.
   * Configurable to run with local SQLite volume mounts or spin up a PostgreSQL service container when transitioning from SQLite to Postgres.
+
+---
+
+## 7. Financial Data & Money Representation
+
+To ensure high-precision financial operations and prevent floating-point calculation errors:
+* **Current Representation**: Monetary amounts are represented as `int64` representing the minor unit (cents/pence) of the currency (e.g. `$10.50` is stored as `1050`). This is a standard and robust approach for typical ledger operations.
+* **Go Package Equivalent to PHP `brick/money`**: If the project grows to require advanced multi-currency support, exchange rate calculations, or localized formatting, we will integrate **`github.com/govalues/money`**.
+  * `govalues/money` provides immutable monetary value objects with arbitrary precision, currency validation, and strict rounding controls, closely mirroring the design principles of PHP's `brick/money`.
+* **Arbitrary Precision Alternative**: For fractional cents or complex interest calculations, **`github.com/shopspring/decimal`** is used as the standard arbitrary-precision numeric library in the Go ecosystem.

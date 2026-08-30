@@ -288,7 +288,7 @@ export default function Dashboard() {
 
           {/* List View */}
           <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#f3f4f6' }}>Inventory Items Table (`inv_items`)</h3>
+            <h3 style={{ margin: '0 0 1rem 0', color: '#f3f4f6' }}>Inventory Items Table (`inventory_items`)</h3>
             {items.length === 0 ? (
               <p style={{ color: '#6b7280' }}>No inventory items found. Add one above!</p>
             ) : (

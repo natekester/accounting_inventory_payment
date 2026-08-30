@@ -20,7 +20,7 @@ type ItemModel struct {
 }
 
 func (ItemModel) TableName() string {
-	return "inv_items"
+	return "inventory_items"
 }
 
 // Migrate runs GORM auto-migrations for the inventory schema.
