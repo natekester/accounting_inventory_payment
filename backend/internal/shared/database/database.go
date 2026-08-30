@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/glebarez/sqlite"
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -24,7 +24,7 @@ func InitDB() (*gorm.DB, error) {
 		}
 		dialector = postgres.Open(dsn)
 	} else {
-		// Default SQLite
+		// Default SQLite using pure Go driver (no CGO required)
 		if dsn == "" {
 			dsn = "inventory.db"
 		}
