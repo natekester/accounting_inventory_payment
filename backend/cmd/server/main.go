@@ -63,7 +63,10 @@ func main() {
 
 	// 4. Instantiate Repositories & Domain Services (Strategy Contexts)
 	// Inventory Module with QBO Integration Strategy
-	qboStrategy := strategy.NewQBOStrategy("mock_client_id", "mock_client_secret")
+	qboClientID := os.Getenv("QBO_CLIENT_ID")
+	qboClientSecret := os.Getenv("QBO_CLIENT_SECRET")
+	
+	qboStrategy := strategy.NewQBOStrategy(qboClientID, qboClientSecret)
 	iRepo := invRepo.NewGORMRepository(db)
 	iService := invDomain.NewService(iRepo, qboStrategy)
 	iHandler := invHandler.NewHTTPHandler(iService)
