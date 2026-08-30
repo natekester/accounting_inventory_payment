@@ -4,7 +4,8 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      target: development
     container_name: modular_monolith_backend
     ports:
       - "8080:8080"
@@ -19,7 +20,8 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      target: development
     container_name: modular_monolith_frontend
     ports:
       - "3000:3000"

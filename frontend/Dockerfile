@@ -1,3 +1,18 @@
+# Development Stage
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
+
+# Build Stage for Production
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -11,8 +26,8 @@ ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN npm run build
 
-# Production Runner Stage
-FROM node:20-alpine AS runner
+# Production Runtime Stage
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
