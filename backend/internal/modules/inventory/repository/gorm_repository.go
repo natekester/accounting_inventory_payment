@@ -92,6 +92,31 @@ func (r *gormRepository) UpdateQuantity(ctx context.Context, id string, delta in
 	return toDomain(&model), nil
 }
 
+func (r *gormRepository) GetBySKU(ctx context.Context, sku string) (*domain.Item, error) {
+	var model db.ItemModel
+	if err := r.db.WithContext(ctx).First(&model, "sku = ?", sku).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrItemNotFound
+		}
+		return nil, err
+	}
+	return toDomain(&model), nil
+}
+
+func (r *gormRepository) Update(ctx context.Context, item *domain.Item) error {
+	model := db.ItemModel{
+		ID:          item.ID,
+		SKU:         item.SKU,
+		Name:        item.Name,
+		Description: item.Description,
+		Quantity:    item.Quantity,
+		PriceCents:  item.PriceCents,
+		QBOItemID:   item.QBOItemID,
+	}
+	// Updates name, description, quantity, price, and QBOItemID fields
+	return r.db.WithContext(ctx).Save(&model).Error
+}
+
 func toDomain(m *db.ItemModel) *domain.Item {
 	return &domain.Item{
 		ID:          m.ID,

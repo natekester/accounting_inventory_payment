@@ -58,6 +58,20 @@ func (m *mockRepository) UpdateQBOItemID(ctx context.Context, id string, qboItem
 	return nil
 }
 
+func (m *mockRepository) GetBySKU(ctx context.Context, sku string) (*domain.Item, error) {
+	for _, item := range m.items {
+		if item.SKU == sku {
+			return item, nil
+		}
+	}
+	return nil, domain.ErrItemNotFound
+}
+
+func (m *mockRepository) Update(ctx context.Context, item *domain.Item) error {
+	m.items[item.ID] = item
+	return nil
+}
+
 type mockQBO struct {
 	createCalled     bool
 	adjustCalled     bool
@@ -77,6 +91,19 @@ func (m *mockQBO) AdjustInventory(ctx context.Context, qboItemID string, qtyDelt
 	m.lastAdjustQBOID = qboItemID
 	m.lastAdjustDelta = qtyDelta
 	return nil
+}
+
+func (m *mockQBO) FetchItems(ctx context.Context) ([]domain.Item, error) {
+	return []domain.Item{
+		{
+			SKU:         "SKU-QBO-01",
+			Name:        "Pulled Item 1",
+			Description: "Pulled description 1",
+			Quantity:    20,
+			PriceCents:  1000,
+			QBOItemID:   "qbo_itm_1111",
+		},
+	}, nil
 }
 
 func TestInventoryService_CreateAndGet(t *testing.T) {
@@ -166,5 +193,48 @@ func TestInventoryService_AdjustStock_Success(t *testing.T) {
 
 	if qbo.lastAdjustQBOID != "mock-qbo-ref-999" || qbo.lastAdjustDelta != 3 {
 		t.Errorf("expected QBO Adjust parameters to be ID='mock-qbo-ref-999', delta=3, got ID='%s', delta=%d", qbo.lastAdjustQBOID, qbo.lastAdjustDelta)
+	}
+}
+
+func TestInventoryService_SyncCurrentItems_TwoWay(t *testing.T) {
+	repo := newMockRepository()
+	qbo := &mockQBO{}
+	service := domain.NewService(repo, qbo)
+	ctx := context.Background()
+
+	// 1. Setup local unsynced item (should be pushed to QBO)
+	unsyncedLocal := &domain.Item{
+		ID:         "local-unsynced",
+		SKU:        "SKU-LOCAL-01",
+		Name:       "Local Unsynced Item",
+		Quantity:   12,
+		PriceCents: 2000,
+	}
+	_ = repo.Create(ctx, unsyncedLocal)
+
+	// 2. Perform synchronization
+	count, err := service.SyncCurrentItems(ctx)
+	if err != nil {
+		t.Fatalf("expected no error during sync, got %v", err)
+	}
+
+	// Local unsynced item should be pushed (count = 1)
+	if count != 1 {
+		t.Errorf("expected 1 item to be pushed, got %d", count)
+	}
+
+	// Local unsynced item should now have QBO reference ID
+	syncedLocal, _ := repo.GetByID(ctx, "local-unsynced")
+	if syncedLocal.QBOItemID != "mock-qbo-ref-999" {
+		t.Errorf("expected local item to be updated with QBO ID, got '%s'", syncedLocal.QBOItemID)
+	}
+
+	// Pulled item (SKU-QBO-01) from QBO should be created locally
+	pulledItem, err := repo.GetBySKU(ctx, "SKU-QBO-01")
+	if err != nil {
+		t.Fatalf("expected pulled item to be created locally, but got error: %v", err)
+	}
+	if pulledItem.Name != "Pulled Item 1" || pulledItem.Quantity != 20 {
+		t.Errorf("expected pulled item Name='Pulled Item 1', Qty=20, got Name='%s', Qty=%d", pulledItem.Name, pulledItem.Quantity)
 	}
 }

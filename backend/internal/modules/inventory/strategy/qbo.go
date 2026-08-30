@@ -48,3 +48,30 @@ func (q *QBOStrategy) AdjustInventory(ctx context.Context, qboItemID string, qty
 
 	return nil
 }
+
+func (q *QBOStrategy) FetchItems(ctx context.Context) ([]domain.Item, error) {
+	log.Println("[QBO Sync] Simulating fetching all inventory items from QBO API endpoint /v3/company/<id>/query?query=select * from Item where Type='Inventory'")
+	
+	// Return a static array of mock QBO items to pull down
+	mockItems := []domain.Item{
+		{
+			SKU:         "SKU-QBO-01",
+			Name:        "QBO Heavy Duty Bracket",
+			Description: "QuickBooks imported heavy bracket",
+			Quantity:    25,
+			PriceCents:  3499,
+			QBOItemID:   "qbo_itm_1111",
+		},
+		{
+			SKU:         "SKU-QBO-02",
+			Name:        "QBO Specialty Bolt",
+			Description: "QuickBooks imported specialty bolt",
+			Quantity:    150,
+			PriceCents:  150,
+			QBOItemID:   "qbo_itm_2222",
+		},
+	}
+	
+	log.Printf("[QBO Sync] QBO returned %d inventory items.", len(mockItems))
+	return mockItems, nil
+}

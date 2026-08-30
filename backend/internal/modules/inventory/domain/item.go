@@ -29,7 +29,9 @@ type Item struct {
 type Repository interface {
 	Create(ctx context.Context, item *Item) error
 	GetByID(ctx context.Context, id string) (*Item, error)
+	GetBySKU(ctx context.Context, sku string) (*Item, error)
 	List(ctx context.Context) ([]*Item, error)
+	Update(ctx context.Context, item *Item) error
 	UpdateQuantity(ctx context.Context, id string, delta int) (*Item, error)
 	UpdateQBOItemID(ctx context.Context, id string, qboItemID string) error
 }
@@ -38,6 +40,7 @@ type Repository interface {
 type QBOIntegration interface {
 	CreateItem(ctx context.Context, item Item) (string, error) // Returns QBO Item Ref ID
 	AdjustInventory(ctx context.Context, qboItemID string, qtyDelta int) error
+	FetchItems(ctx context.Context) ([]Item, error)
 }
 
 // Service represents the Inventory Domain Service
@@ -104,6 +107,48 @@ func (s *Service) AdjustStock(ctx context.Context, id string, delta int) (*Item,
 }
 
 func (s *Service) SyncCurrentItems(ctx context.Context) (int, error) {
+	// 1. Pull down items from QBO
+	if s.qbo != nil {
+		qboItems, err := s.qbo.FetchItems(ctx)
+		if err != nil {
+			log.Printf("[QBO Sync] Failed to fetch items from QBO during pull step: %v", err)
+		} else {
+			for _, qItem := range qboItems {
+				// Check if item exists locally by SKU
+				existing, err := s.repo.GetBySKU(ctx, qItem.SKU)
+				if err != nil {
+					if err == ErrItemNotFound {
+						// Create new local item
+						newItem := &Item{
+							SKU:         qItem.SKU,
+							Name:        qItem.Name,
+							Description: qItem.Description,
+							Quantity:    qItem.Quantity,
+							PriceCents:  qItem.PriceCents,
+							QBOItemID:   qItem.QBOItemID,
+						}
+						if err := s.repo.Create(ctx, newItem); err != nil {
+							log.Printf("[QBO Sync] Failed to create pulled QBO item locally %s: %v", qItem.SKU, err)
+						}
+					} else {
+						log.Printf("[QBO Sync] Failed to lookup local item by SKU %s: %v", qItem.SKU, err)
+					}
+				} else {
+					// Update existing item values with pulled QBO details
+					existing.Name = qItem.Name
+					existing.Description = qItem.Description
+					existing.Quantity = qItem.Quantity
+					existing.PriceCents = qItem.PriceCents
+					existing.QBOItemID = qItem.QBOItemID
+					if err := s.repo.Update(ctx, existing); err != nil {
+						log.Printf("[QBO Sync] Failed to update local item with pulled QBO details %s: %v", qItem.SKU, err)
+					}
+				}
+			}
+		}
+	}
+
+	// 2. Push unsynced local items to QBO
 	items, err := s.repo.List(ctx)
 	if err != nil {
 		return 0, err
