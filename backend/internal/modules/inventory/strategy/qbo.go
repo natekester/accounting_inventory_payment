@@ -42,9 +42,9 @@ func (q *QBOStrategy) AdjustInventory(ctx context.Context, qboItemID string, qty
 	// In production, this performs an OAuth2 authorized HTTP POST to QBO endpoint /v3/company/<id>/inventoryadjustment
 	log.Printf("[QBO Sync] Simulating QuickBooks Inventory Adjustment for QBO Item ID: %s with delta: %d", qboItemID, qtyDelta)
 
-	// Print expected QBO Adjustment payload
-	log.Printf("[QBO Sync] JSON payload sent to QBO /inventoryadjustment endpoint:\n{\n  \"QBOItemIDRef\": \"%s\",\n  \"AdjustmentDelta\": %d,\n  \"AdjustmentDate\": \"%s\"\n}",
-		qboItemID, qtyDelta, time.Now().Format("2006-01-02"))
+	// Print expected QBO Adjustment payload aligning with Intuit QBO specifications
+	log.Printf("[QBO Sync] JSON payload sent to QBO /inventoryadjustment endpoint:\n{\n  \"TxnDate\": \"%s\",\n  \"Line\": [\n    {\n      \"DetailType\": \"InventoryAdjustmentLineDetail\",\n      \"InventoryAdjustmentLineDetail\": {\n        \"ItemRef\": {\n          \"value\": \"%s\"\n        },\n        \"QtyDiff\": %d\n      }\n    }\n  ]\n}",
+		time.Now().Format("2006-01-02"), qboItemID, qtyDelta)
 
 	return nil
 }
