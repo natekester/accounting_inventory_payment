@@ -1,0 +1,14 @@
+# Ignore local DBs and binaries
+*.db
+*.sqlite
+*.sqlite3
+tmp/
+bin/
+dist/
+*.exe
+*.test
+*.out
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
